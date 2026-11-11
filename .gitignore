@@ -1,0 +1,61 @@
+# ================= 
+# DEPENDENCIES
+# =================
+node_modules/
+**/node_modules/
+
+# ================= 
+# ENVIRONMENT & SECRETS
+# =================
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# ================= 
+# BUILD & PRODUCTION OUTPUTS
+# =================
+dist/
+build/
+.output/
+
+dist-server/
+lib/
+
+# ================= 
+# LOGS & DATABASES LOKAL
+# =================
+logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+
+*.sqlite
+*.sqlite-journal
+*.db
+
+# ================= 
+# OPERATING SYSTEM FILES
+# =================
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# ================= 
+# IDE & EDITOR SETTINGS
+# =================
+.vscode/
+.idea/
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.swp
