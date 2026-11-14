@@ -10,9 +10,19 @@ app.use(cors());
 app.use(express.json());
 
 db.connect(process.env.URL_DB)
-  .then(() => console.log("success running mongodb"))
+  .then(() => console.log("Successfully connected to MongoDB"))
   .catch((e) => console.error(e));
 
+// class error
+class AppError extends Error {
+  constructor(message, statusCode) {
+    super(message);
+    this.statusCode = statusCode;
+    this.isOperational = true;
+  }
+}
+
+// schema template
 const topicSchema = new db.Schema(
   {
     name: {
@@ -37,7 +47,7 @@ const messageSchema = new db.Schema(
     topic: {
       type: db.Schema.Types.ObjectId,
       ref: "Topic",
-      required: [true, "The message topic must be filled in"],
+      required: [true, "Topic is required"],
     },
   },
   { timestamps: true },
@@ -47,47 +57,107 @@ const Message = db.model("Message", messageSchema);
 // topic
 app
   .route("/v1/api/topic")
-  .get((req, res) => {
-    Topic.find()
-      .then((x) => res.status(200).json(x))
-      .catch((e) => res.status(500).json({ error: e.message }));
+  .get(async (req, res, next) => {
+    try {
+      const dataTopics = await Topic.find();
+
+      return res.status(200).json(dataTopics);
+    } catch (e) {
+      next(e);
+    }
   })
-  .post((req, res) => {
-    Topic.create({ name: req.body.name })
-      .then((x) => res.status(201).json({ message: "The topic was successfully created", data: x }))
-      .catch((e) => res.status(500).json({ error: e.message }));
+  .post(async (req, res, next) => {
+    try {
+      const { name } = req.body;
+
+      const uniqueName = await Topic.findOne({ name });
+      if (uniqueName) throw new AppError("This topic already exists", 409);
+
+      const createTopic = await Topic.create({ name });
+
+      return res.status(201).json({ message: "The topic was successfully created", data: createTopic });
+    } catch (e) {
+      next(e);
+    }
   });
-app.delete("/v1/api/topic/:id", (req, res) => {
-  Topic.findByIdAndDelete(req.params.id)
-    .then((x) => res.status(200).json({ message: "The topic was successfully deleted", data: x }))
-    .catch((e) => res.status(500).json({ error: e.message }));
+app.delete("/v1/api/topic/:id", async (req, res, next) => {
+  try {
+    const reqId = req.params.id;
+    const [topicUsed, findTopic] = await Promise.all([Message.countDocuments({ topic: reqId }), Topic.findById(reqId)]);
+
+    if (!findTopic) throw new AppError("Topic not found", 404);
+    if (topicUsed > 0) throw new AppError(`This topic has been used in ${topicUsed} messages`, 409);
+
+    const deleteTopic = await Topic.findByIdAndDelete(reqId);
+
+    return res.status(200).json({ message: "The topic was successfully deleted", data: deleteTopic });
+  } catch (e) {
+    next(e);
+  }
 });
 
 // message
 app
   .route("/v1/api/message")
-  .get((req, res) => {
-    Message.find()
-      .populate("topic", "name")
-      .then((x) => res.status(200).json(x))
-      .catch((e) => res.status(500).json({ error: e.message }));
+  .get(async (req, res, next) => {
+    try {
+      const dataMessages = await Message.find().populate("topic", "name");
+
+      return res.status(200).json(dataMessages);
+    } catch (e) {
+      next(e);
+    }
   })
-  .post((req, res) => {
-    Message.create({
-      name: req.body.name,
-      message: req.body.message,
-      topic: req.body.idTopic,
-    })
-      .then((x) => res.status(201).json({ message: "Message has been successfully created", data: x }))
-      .catch((e) => res.status(500).json({ error: e.message }));
+  .post(async (req, res, next) => {
+    try {
+      const { name, message, topic } = req.body;
+
+      const createMessage = await Message.create({ name, message, topic });
+
+      return res.status(201).json({ message: "Message has been successfully created", data: createMessage });
+    } catch (e) {
+      next(e);
+    }
   });
-app.delete("/v1/api/:id", (req, res) => {
-  Message.findByIdAndDelete(req.params.id)
-    .then((x) => res.status(200).json({ message: "Message has been successfully deleted", data: x }))
-    .catch((e) => res.status(404).json({ error: e.message }));
+app.delete("/v1/api/message/:id", async (req, res, next) => {
+  try {
+    const reqId = req.params.id;
+    const deleteMessage = await Message.findByIdAndDelete(reqId);
+
+    if (!deleteMessage) throw new AppError("Message not found", 404);
+
+    return res.status(200).json({ message: "Message has been successfully deleted", data: deleteMessage });
+  } catch (e) {
+    next(e);
+  }
 });
 
-const PORT = 3001;
-app.listen(PORT, () => {
-  console.log(`Server is running on port ${PORT}`);
+// middleware error
+app.use((err, req, res, next) => {
+  if (err.name === "ValidationError") {
+    const errors = Object.values(err.errors).map((er) => er.message);
+
+    return res.status(400).json({
+      status: "fail",
+      message: errors,
+    });
+  }
+
+  if (err.isOperational) {
+    return res.status(err.statusCode).json({
+      status: "fail",
+      message: err.message,
+    });
+  }
+
+  console.error(err);
+  return res.status(500).json({
+    status: "error",
+    message: "An error occurred on the server",
+  });
+});
+
+const port = 3001;
+app.listen(port, () => {
+  console.log(`Server is running on port ${port}`);
 });
