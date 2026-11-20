@@ -3,21 +3,9 @@ import axios from "axios";
 import { toast } from "sonner";
 
 import { dataContext } from "../contexts/DataContext.jsx";
+import { getError, capitalizeWords } from "../fuction.js";
 
 import { MdDeleteForever } from "react-icons/md";
-
-function getErrorTopic(error) {
-  const message = error.response?.data?.message ?? error.message ?? "An unexpected error occurred";
-  return Array.isArray(message) ? message.join(", ") : message;
-}
-
-function capitalizeWords(text) {
-  return text
-    .toLowerCase()
-    .split(" ")
-    .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
-    .join(" ");
-}
 
 const Topic = () => {
   const [formTopic, setFormTopic] = useState({ name: "" });
@@ -41,7 +29,7 @@ const Topic = () => {
       setFormTopic({ name: "" });
       toast.success(response.data.message);
     } catch (error) {
-      toast.error(getErrorTopic(error));
+      toast.error(getError(error));
     }
   };
 
@@ -52,7 +40,7 @@ const Topic = () => {
       dispatch({ type: "SET_TOPICS", payload: topics.data });
       toast.success(response.data.message);
     } catch (error) {
-      toast.error(getErrorTopic(error));
+      toast.error(getError(error));
     }
   };
 

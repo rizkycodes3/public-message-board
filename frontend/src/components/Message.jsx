@@ -3,24 +3,24 @@ import { toast } from "sonner";
 import axios from "axios";
 
 import { dataContext } from "../contexts/DataContext.jsx";
+import { getError, capitalizeWords } from "../fuction.js";
 
 import { MdDeleteForever } from "react-icons/md";
 
-const getErrorMessage = (error) => {
-  const message = error.response?.data?.message ?? error.message ?? "An unexpected error occurred";
-  return Array.isArray(message) ? message.join(", ") : message;
-};
-
 const Message = () => {
   const [formMessage, setFormMessage] = useState({ name: "", message: "", topic: "" });
+  const [whatFilter, setWhatFilter] = useState({ filterName: "", filterTopic: "" });
+
   const { state, dispatch } = useContext(dataContext);
   const { message, topic } = state;
 
   const handleChange = (e) => {
-    setFormMessage({
-      ...formMessage,
-      [e.target.name]: e.target.value,
-    });
+    const { name, value } = e.target;
+
+    setFormMessage((prev) => ({
+      ...prev,
+      [name]: name === "name" ? capitalizeWords(value) : value,
+    }));
   };
 
   const handleSubmit = async (e) => {
@@ -33,7 +33,7 @@ const Message = () => {
       setFormMessage({ name: "", message: "", topic: "" });
       toast.success(response.data.message);
     } catch (error) {
-      toast.error(getErrorMessage(error));
+      toast.error(getError(error));
     }
   };
 
@@ -44,9 +44,21 @@ const Message = () => {
       dispatch({ type: "SET_MESSAGES", payload: messages.data });
       toast.success(response.data.message);
     } catch (error) {
-      toast.error(getErrorMessage(error));
+      toast.error(getError(error));
     }
   };
+
+  const filterName = [...new Set(message.map((item) => item.name))];
+
+  const changeFilterName = (e) => setWhatFilter({ ...whatFilter, filterName: e.target.value });
+  const changeFilterTopic = (e) => setWhatFilter({ ...whatFilter, filterTopic: e.target.value });
+
+  const messageFilter = message.filter((item) => {
+    const name = whatFilter.filterName === "" || whatFilter.filterName === item.name;
+    const topic = whatFilter.filterTopic === "" || whatFilter.filterTopic === item.topic.name;
+
+    return name && topic;
+  });
 
   return (
     <section>
@@ -86,8 +98,28 @@ const Message = () => {
         </button>
       </form>
 
+      <div className="flex justify-around border rounded-lg border-gray-300 mt-5 py-1">
+        <select name="filterName" id="filterName" onChange={changeFilterName}>
+          <option value="">Select Name</option>
+          {filterName.map((item, i) => (
+            <option key={i} value={item}>
+              {item}
+            </option>
+          ))}
+        </select>
+
+        <select name="filterTopic" id="filterTopic" onChange={changeFilterTopic}>
+          <option value="">Select Topic</option>
+          {topic.map((item) => (
+            <option key={item._id} value={item.name}>
+              {item.name}
+            </option>
+          ))}
+        </select>
+      </div>
+
       <ul className="mt-6">
-        {message.map((item) => (
+        {messageFilter.map((item) => (
           <li key={item._id} className="mb-10 grid grid-cols-[1fr_auto] grid-rows-[auto_1fr]">
             <h3 className="font-semibold text-2xl">{item.name}</h3>
             <p className="text-base/relaxed whitespace-pre-wrap row-[2/3]">{item.message}</p>
