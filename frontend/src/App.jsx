@@ -1,5 +1,6 @@
 import { useContext } from "react";
 import { Routes, Route, NavLink } from "react-router";
+import { Toaster } from "sonner";
 
 import Message from "./components/Message";
 import Topic from "./components/Topic";
@@ -35,6 +36,7 @@ const App = () => {
           <Route path="/topic" element={<Topic />} />
         </Routes>
       )}
+      <Toaster position="bottom-center" />
     </main>
   );
 };
