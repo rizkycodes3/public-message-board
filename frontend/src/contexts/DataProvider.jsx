@@ -1,9 +1,8 @@
-import { createContext, useReducer, useEffect, useState } from "react";
-import { initialState, dataReducer } from "../dataReducer.js";
-
+import { useReducer, useEffect, useState } from "react";
 import axios from "axios";
 
-export const dataContext = createContext(null);
+import { initialState, dataReducer } from "../dataReducer.js";
+import { dataContext } from "./DataContext.jsx";
 
 const DataProvider = ({ children }) => {
   const [state, dispatch] = useReducer(dataReducer, initialState);

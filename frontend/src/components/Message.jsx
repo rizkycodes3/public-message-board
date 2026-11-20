@@ -2,7 +2,7 @@ import { useState, useContext } from "react";
 import { toast } from "sonner";
 import axios from "axios";
 
-import { dataContext } from "../contexts/DataProvider";
+import { dataContext } from "../contexts/DataContext.jsx";
 
 import { MdDeleteForever } from "react-icons/md";
 

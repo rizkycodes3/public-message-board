@@ -5,7 +5,7 @@ import { Toaster } from "sonner";
 import Message from "./components/Message";
 import Topic from "./components/Topic";
 
-import { dataContext } from "./contexts/DataProvider";
+import { dataContext } from "./contexts/DataContext.jsx";
 
 const App = () => {
   const { isLoading } = useContext(dataContext);
