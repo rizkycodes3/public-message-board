@@ -10,10 +10,12 @@ import { MdDeleteForever } from "react-icons/md";
 const Message = () => {
   const [formMessage, setFormMessage] = useState({ name: "", message: "", topic: "" });
   const [whatFilter, setWhatFilter] = useState({ filterName: "", filterTopic: "" });
+  const [pagination, setPagination] = useState({ currentPage: 1, messagePerPage: 5 });
 
   const { state, dispatch } = useContext(dataContext);
   const { message, topic } = state;
 
+  //👇 function handle
   const handleChange = (e) => {
     const { name, value } = e.target;
 
@@ -48,6 +50,7 @@ const Message = () => {
     }
   };
 
+  //👇 filter
   const filterName = [...new Set(message.map((item) => item.name))];
 
   const changeFilterName = (e) => setWhatFilter({ ...whatFilter, filterName: e.target.value });
@@ -59,6 +62,19 @@ const Message = () => {
 
     return name && topic;
   });
+
+  //👇 pagination
+  const lastMessageIndex = pagination.currentPage * pagination.messagePerPage;
+  const firstMessageIndex = lastMessageIndex - pagination.messagePerPage;
+  const currentMessage = messageFilter.slice(firstMessageIndex, lastMessageIndex);
+  const totalMessages = messageFilter.length;
+
+  let pages = [];
+  for (let i = 1; i <= Math.ceil(totalMessages / pagination.messagePerPage); i++) {
+    pages.push(i);
+  }
+
+  const handlePagination = (i) => setPagination({ ...pagination, currentPage: i + 1 });
 
   return (
     <section>
@@ -119,7 +135,7 @@ const Message = () => {
       </div>
 
       <ul className="mt-6">
-        {messageFilter.map((item) => (
+        {currentMessage.map((item) => (
           <li key={item._id} className="mb-10 grid grid-cols-[1fr_auto] grid-rows-[auto_1fr]">
             <h3 className="font-semibold text-2xl">{item.name}</h3>
             <p className="text-base/relaxed whitespace-pre-wrap row-[2/3]">{item.message}</p>
@@ -129,6 +145,14 @@ const Message = () => {
           </li>
         ))}
       </ul>
+
+      <div className="flex gap-3 w-fit m-auto mb-5">
+        {pages.map((page, i) => (
+          <button key={i} onClick={() => handlePagination(i)} className={`cursor-pointer rounded-full border border-gray-300 p-2 ${pagination.currentPage === page ? "bg-blue-600 text-white" : ""}`}>
+            {page}
+          </button>
+        ))}
+      </div>
     </section>
   );
 };

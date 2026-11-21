@@ -12,6 +12,7 @@ const Topic = () => {
   const { state, dispatch } = useContext(dataContext);
   const { topic } = state;
 
+  //👇 function handle
   const handleChange = (e) => {
     setFormTopic({
       ...formTopic,
